@@ -1,6 +1,6 @@
 [package]
 name = "vortex-mod-gallery"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 description = "Gallery WASM plugin for Vortex — Imgur, Reddit, Flickr image galleries"
 license = "GPL-3.0"
