@@ -11,6 +11,7 @@ const GENERIC_URL: &str = "https://example.test/gallery/page.html";
 const GENERIC_IMAGE_URL: &str = "https://example.test/gallery/sample.jpg";
 const IMGUR_BODY: &str = r#"{"data":[{"id":"img1","title":"sample","link":"https://i.imgur.com/img1.jpg","width":1920,"height":1080}],"status":200,"success":true}"#;
 const GENERIC_BODY: &str = r#"<html><body><img src="sample.jpg"></body></html>"#;
+const SMOKE_CLIENT_ID: &str = "SMOKE_CLIENT";
 
 fn wasm_path() -> PathBuf {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(WASM_REL_PATH);
@@ -38,6 +39,14 @@ fn stub_http_request() -> Function {
                 .as_str()
                 .ok_or_else(|| extism::Error::msg("http_request URL is missing"))?;
             let body = if url.contains("api.imgur.com") {
+                // The configured client id must travel from `get_config`
+                // all the way into the Imgur Authorization header.
+                let auth = request["headers"]["Authorization"].as_str().unwrap_or("");
+                if auth != format!("Client-ID {SMOKE_CLIENT_ID}") {
+                    return Err(extism::Error::msg(format!(
+                        "imgur request carries wrong Authorization header: {auth:?}"
+                    )));
+                }
                 IMGUR_BODY
             } else if url == GENERIC_URL {
                 GENERIC_BODY
@@ -60,8 +69,17 @@ fn stub_get_config() -> Function {
         [PTR],
         [PTR],
         UserData::<()>::default(),
-        |plugin, _inputs, outputs, _user_data: UserData<()>| {
-            let handle = plugin.memory_new("")?;
+        |plugin, inputs, outputs, _user_data: UserData<()>| {
+            let input = inputs[0]
+                .i64()
+                .ok_or_else(|| extism::Error::msg("get_config expected i64 input"))?;
+            let key: String = plugin.memory_get_val(&Val::I64(input))?;
+            let value = if key == "imgur_client_id" {
+                SMOKE_CLIENT_ID
+            } else {
+                ""
+            };
+            let handle = plugin.memory_new(value)?;
             outputs[0] = Val::I64(handle.offset() as i64);
             Ok(())
         },
