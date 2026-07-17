@@ -1,6 +1,6 @@
 [plugin]
 name = "vortex-mod-gallery"
-version = "1.0.0"
+version = "1.1.0"
 category = "crawler"
 author = "vortex-community"
 description = "Image galleries: Imgur, Reddit, Flickr, generic <img> scraping"
@@ -15,3 +15,5 @@ http = true
 [config]
 min_resolution = { type = "string", default = "800x600", description = "Filter by minimum image size (WxH)" }
 auto_name = { type = "boolean", default = true, description = "Auto-generate filenames from provider metadata" }
+imgur_client_id = { type = "string", default = "", description = "Imgur API client ID (sent as 'Client-ID' authorization header)" }
+flickr_api_key = { type = "string", default = "", description = "Flickr REST API key" }
